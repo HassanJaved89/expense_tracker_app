@@ -23,7 +23,7 @@ class ExpenseCategoryDropdown extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: selectedCategory,
+          initialValue: selectedCategory,
           items: _categories
               .map(
                 (category) => DropdownMenuItem(

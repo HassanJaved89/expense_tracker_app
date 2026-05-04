@@ -11,6 +11,5 @@ class ExpenseNavigationController {
   static const tabs = <ExpenseTab>[
     ExpenseTab(label: 'Add Expense', icon: Icons.add_circle_outline),
     ExpenseTab(label: 'Expenses', icon: Icons.list_alt),
-    ExpenseTab(label: 'Summary', icon: Icons.insights),
   ];
 }

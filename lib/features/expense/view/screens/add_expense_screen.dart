@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/expense_provider.dart';
-import '../widgets/expense_category_dropdown.dart';
 import '../widgets/expense_input_field.dart';
 
 class AddExpenseScreen extends StatefulWidget {
@@ -13,13 +13,19 @@ class AddExpenseScreen extends StatefulWidget {
 }
 
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
+  static const _categories = ['Food', 'Travel', 'Bills', 'Other'];
+
   final TextEditingController _amountController = TextEditingController();
-  String _selectedCategory = 'Food';
+  final TextEditingController _commentController = TextEditingController();
+  final FocusNode _amountFocusNode = FocusNode();
+  String _selectedCategory = _categories.first;
   bool _isLoading = false;
 
   @override
   void dispose() {
     _amountController.dispose();
+    _commentController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -42,15 +48,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     setState(() => _isLoading = true);
 
+    final messenger = ScaffoldMessenger.of(context);
     try {
-      await context.read<ExpenseProvider>().addExpense(amount, _selectedCategory);
+      final comment = _commentController.text.trim().isEmpty ? null : _commentController.text.trim();
+      await context.read<ExpenseProvider>().addExpense(amount, _selectedCategory, comment);
       _amountController.clear();
-      setState(() => _selectedCategory = 'Food');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Expense added successfully!')),
+      _commentController.clear();
+      setState(() => _selectedCategory = _categories.first);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Expense added')),
       );
+      _amountFocusNode.requestFocus();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Error adding expense: $e')),
       );
     } finally {
@@ -71,17 +81,40 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           children: [
             ExpenseInputField(
               controller: _amountController,
+              focusNode: _amountFocusNode,
+              autoFocus: true,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
               label: 'Amount',
               hintText: 'Enter amount',
             ),
             const SizedBox(height: 16),
-            ExpenseCategoryDropdown(
-              selectedCategory: _selectedCategory,
-              onChanged: (category) {
-                if (category != null) {
-                  setState(() => _selectedCategory = category);
-                }
-              },
+            Text(
+              'Category',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              children: _categories.map((category) {
+                return ChoiceChip(
+                  label: Text(category),
+                  selected: _selectedCategory == category,
+                  onSelected: (_) => setState(() => _selectedCategory = category),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _commentController,
+              decoration: const InputDecoration(
+                labelText: 'Comment (optional)',
+                hintText: 'Add a note about this expense',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              textInputAction: TextInputAction.newline,
             ),
             const Spacer(),
             FilledButton(

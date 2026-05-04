@@ -16,22 +16,28 @@ class Expense extends HiveObject {
   @HiveField(3)
   final DateTime dateTime;
 
+  @HiveField(4)
+  final String? comment;
+
   Expense({
     required this.id,
     required this.amount,
     required this.category,
     required this.dateTime,
+    this.comment,
   });
 
   factory Expense.create({
     required double amount,
     required String category,
+    String? comment,
   }) {
     return Expense(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       amount: amount,
       category: category,
-      dateTime: DateTime.now(),
+      dateTime: DateTime.now(), // Store in local time
+      comment: comment,
     );
   }
 }
