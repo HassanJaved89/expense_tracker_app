@@ -213,6 +213,17 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateExpense(Expense updatedExpense) async {
+    final key = _expenseBox.keys.cast<dynamic>().firstWhere(
+      (expenseKey) => _expenseBox.get(expenseKey)?.id == updatedExpense.id,
+      orElse: () => null,
+    );
+    if (key != null) {
+      await _expenseBox.put(key, updatedExpense);
+      notifyListeners();
+    }
+  }
+
   Future<void> deleteExpense(Expense expense) async {
     await expense.delete();
     notifyListeners();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../model/expense.dart';
 import '../../../../core/utils/formatters.dart';
+import '../screens/add_expense_screen.dart';
 
 class ExpenseDetailSheet extends StatelessWidget {
   const ExpenseDetailSheet({super.key, required this.expense});
@@ -19,8 +20,8 @@ class ExpenseDetailSheet extends StatelessWidget {
           Text(
             formatCurrency(expense.amount),
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 16),
           Text(
@@ -36,8 +37,8 @@ class ExpenseDetailSheet extends StatelessWidget {
           Text(
             'Comment:',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -45,12 +46,26 @@ class ExpenseDetailSheet extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+              const SizedBox(width: 12),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AddExpenseScreen(expense: expense),
+                    ),
+                  );
+                },
+                child: const Text('Edit'),
+              ),
+            ],
           ),
         ],
       ),

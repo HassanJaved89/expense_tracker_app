@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../model/expense.dart';
 import '../../provider/expense_provider.dart';
 import '../widgets/expense_input_field.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final Expense? expense;
+
+  const AddExpenseScreen({super.key, this.expense});
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -20,6 +23,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final FocusNode _amountFocusNode = FocusNode();
   String _selectedCategory = _categories.first;
   bool _isLoading = false;
+  late final bool _isEditMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditMode = widget.expense != null;
+    if (_isEditMode) {
+      final expense = widget.expense!;
+      _amountController.text = expense.amount.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+?$'), '');
+      _selectedCategory = _categories.contains(expense.category) ? expense.category : _categories.first;
+      _commentController.text = expense.comment ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -47,11 +63,30 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
 
     setState(() => _isLoading = true);
-
     final messenger = ScaffoldMessenger.of(context);
+    final comment = _commentController.text.trim().isEmpty ? null : _commentController.text.trim();
+
     try {
-      final comment = _commentController.text.trim().isEmpty ? null : _commentController.text.trim();
+      if (_isEditMode) {
+        final existingExpense = widget.expense!;
+        final updatedExpense = Expense(
+          id: existingExpense.id,
+          amount: amount,
+          category: _selectedCategory,
+          dateTime: existingExpense.dateTime,
+          comment: comment,
+        );
+        await context.read<ExpenseProvider>().updateExpense(updatedExpense);
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Expense updated')),
+        );
+        Navigator.of(context).pop();
+        return;
+      }
+
       await context.read<ExpenseProvider>().addExpense(amount, _selectedCategory, comment);
+      if (!mounted) return;
       _amountController.clear();
       _commentController.clear();
       setState(() => _selectedCategory = _categories.first);
@@ -61,7 +96,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       _amountFocusNode.requestFocus();
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Error adding expense: $e')),
+        SnackBar(content: Text('Error saving expense: $e')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -72,7 +107,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Expense'),
+        title: Text(_isEditMode ? 'Edit Expense' : 'Add Expense'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -127,7 +162,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Save Expense'),
+                    : Text(_isEditMode ? 'Update Expense' : 'Save Expense'),
               ),
             ),
           ],
